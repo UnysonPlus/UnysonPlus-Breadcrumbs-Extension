@@ -44,32 +44,32 @@
 		<?php for ( $i = 0; $i < count( $items ); $i ++ ) : ?>
 			<?php if ( $i == ( count( $items ) - 1 ) ) : ?>
                 <span class="last-item" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
-					<span itemprop="title"><?php echo $items[ $i ]['name'] ?></span>
-					<meta itemprop="url" content="<?php echo esc_attr( $items[ $i ]['url'] ) ?>"/>
+					<span itemprop="title"><?php echo esc_html( $items[ $i ]['name'] ) ?></span>
+					<meta itemprop="url" content="<?php echo esc_url( $items[ $i ]['url'] ) ?>"/>
 				</span>
 			<?php elseif ( $i == 0 ) : ?>
                 <span class="first-item" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
 				<?php if ( isset( $items[ $i ]['url'] ) ) : ?>
-                    <a href="<?php echo esc_attr( $items[ $i ]['url'] ) ?>" itemprop="url">
-                        <span itemprop="title"><?php echo $items[ $i ]['name'] ?></span>
+                    <a href="<?php echo esc_url( $items[ $i ]['url'] ) ?>" itemprop="url">
+                        <span itemprop="title"><?php echo esc_html( $items[ $i ]['name'] ) ?></span>
                     </a>
                     </span>
-				<?php else : echo $items[ $i ]['name']; endif ?>
+				<?php else : echo esc_html( $items[ $i ]['name'] ); endif ?>
 				<?php if ($separator) { ?>
-					<span class="separator"><?php echo $separator; ?></span>
+					<span class="separator"><?php echo wp_kses_post( $separator ); ?></span>
 				<?php } ?>
 				<?php
 			else : ?>
-            <span class="<?php echo( $i - 1 ) ?>-item" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+            <span class="<?php echo (int) ( $i - 1 ) ?>-item" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
 				<?php if ( isset( $items[ $i ]['url'] ) ) : ?>
-                    <a href="<?php echo esc_attr( $items[ $i ]['url'] ) ?>" itemprop="url">
-                        <span itemprop="title"><?php echo $items[ $i ]['name'] ?></span>
+                    <a href="<?php echo esc_url( $items[ $i ]['url'] ) ?>" itemprop="url">
+                        <span itemprop="title"><?php echo esc_html( $items[ $i ]['name'] ) ?></span>
                     </a>
                     </span>
-				<?php else : echo '<span itemprop="title">' . $items[ $i ]['name'] . '</span>'; endif ?>
+				<?php else : echo '<span itemprop="title">' . esc_html( $items[ $i ]['name'] ) . '</span>'; endif ?>
 
 				<?php if ($separator) { ?>
-					<span class="separator"><?php echo $separator; ?></span>
+					<span class="separator"><?php echo wp_kses_post( $separator ); ?></span>
 				<?php } ?>
 			<?php endif; ?>
 		<?php endfor; ?>

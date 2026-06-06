@@ -11,7 +11,7 @@ $manifest['description'] = __(
 	'fw'
 );
 
-$manifest['version']     = '1.0.16';
+$manifest['version']     = '1.0.17';
 $manifest['display']     = true;
 $manifest['standalone']  = true;
 
@@ -29,3 +29,13 @@ $manifest['license']      = 'GPL-2.0-or-later';
 $manifest['text_domain']  = 'fw';
 $manifest['requires_php'] = '7.4';
 $manifest['requires_wp']  = '5.8';
+
+/**
+ * Changelog
+ * -----------------------------------------------------------------------------
+ * 1.0.17 - Security: escaped breadcrumb item names with esc_html(), separators
+ *          with wp_kses_post() (allows safe HTML like <i class="..."></i>),
+ *          and URL contexts with esc_url() instead of esc_attr(). Replaced
+ *          unescaped numeric output in class attribute with explicit (int) cast.
+ *          Prevents XSS via maliciously-crafted breadcrumb items.
+ */
