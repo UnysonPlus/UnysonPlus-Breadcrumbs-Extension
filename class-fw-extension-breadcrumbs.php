@@ -45,16 +45,16 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 	 */
 	private function get_default_args( $settings ) {
 		return [
-			'separator'              => ( isset( $settings['separator'] ) && $settings['separator'] !== '' ) ? $settings['separator'] : '>',
-			'prefix'                 => isset( $settings['prefix'] ) ? $settings['prefix'] : '',
-			'home_icon'              => isset( $settings['home_icon'] ) ? $settings['home_icon'] : '',
-			'link_last'              => (bool) ( isset( $settings['link_last'] ) ? $settings['link_last'] : false ),
-			'show_home'              => (bool) ( isset( $settings['show_home'] ) ? $settings['show_home'] : true ),
-			'show_on_front'          => (bool) ( isset( $settings['show_on_front'] ) ? $settings['show_on_front'] : false ),
-			'truncate'               => (int) ( isset( $settings['truncate'] ) ? $settings['truncate'] : 0 ),
-			'post_taxonomy'          => isset( $settings['post_taxonomy'] ) ? $settings['post_taxonomy'] : '',
-			'show_post_type_archive' => (bool) ( isset( $settings['show_post_type_archive'] ) ? $settings['show_post_type_archive'] : true ),
-			'schema'                 => isset( $settings['schema'] ) ? $settings['schema'] : 'microdata',
+			'separator'              => ( $settings['separator'] ?? '' ) !== '' ? $settings['separator'] : '>',
+			'prefix'                 => $settings['prefix'] ?? '',
+			'home_icon'              => $settings['home_icon'] ?? '',
+			'link_last'              => (bool) ( $settings['link_last'] ?? false ),
+			'show_home'              => (bool) ( $settings['show_home'] ?? true ),
+			'show_on_front'          => (bool) ( $settings['show_on_front'] ?? false ),
+			'truncate'               => (int) ( $settings['truncate'] ?? 0 ),
+			'post_taxonomy'          => $settings['post_taxonomy'] ?? '',
+			'show_post_type_archive' => (bool) ( $settings['show_post_type_archive'] ?? true ),
+			'schema'                 => $settings['schema'] ?? 'microdata',
 			'container_class'        => 'breadcrumbs',
 			'aria_label'             => __( 'Breadcrumb', 'fw' ),
 		];
@@ -84,9 +84,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 		$defaults = $this->get_default_args( $settings );
 
 		// Only let non-null overrides through, so an explicit false still wins.
-		$overrides = array_filter( $args, static function ( $value ) {
-			return $value !== null;
-		} );
+		$overrides = array_filter( $args, static fn( $value ) => $value !== null );
 
 		$args = array_merge( $defaults, $overrides );
 		$args = apply_filters( 'fw_ext_breadcrumbs_args', $args );

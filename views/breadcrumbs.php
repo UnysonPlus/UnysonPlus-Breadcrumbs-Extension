@@ -27,14 +27,14 @@ if ( empty( $items ) ) {
 	return;
 }
 
-$separator       = isset( $args['separator'] ) ? $args['separator'] : '>';
-$prefix          = isset( $args['prefix'] ) ? $args['prefix'] : '';
+$separator       = $args['separator'] ?? '>';
+$prefix          = $args['prefix'] ?? '';
 $link_last       = ! empty( $args['link_last'] );
-$home_icon       = isset( $args['home_icon'] ) ? $args['home_icon'] : '';
-$truncate        = isset( $args['truncate'] ) ? (int) $args['truncate'] : 0;
-$schema          = isset( $args['schema'] ) ? $args['schema'] : 'microdata';
-$container_class = isset( $args['container_class'] ) && $args['container_class'] !== '' ? $args['container_class'] : 'breadcrumbs';
-$aria_label      = isset( $args['aria_label'] ) ? $args['aria_label'] : __( 'Breadcrumb', 'fw' );
+$home_icon       = $args['home_icon'] ?? '';
+$truncate        = (int) ( $args['truncate'] ?? 0 );
+$schema          = $args['schema'] ?? 'microdata';
+$container_class = ( $args['container_class'] ?? '' ) !== '' ? $args['container_class'] : 'breadcrumbs';
+$aria_label      = $args['aria_label'] ?? __( 'Breadcrumb', 'fw' );
 
 $microdata = ( $schema === 'microdata' );
 
@@ -65,8 +65,8 @@ $total = count( $items );
 			$is_first = ( $position === 1 );
 			$is_last  = ( $position === $total );
 
-			$name    = isset( $item['name'] ) ? $item['name'] : '';
-			$url     = isset( $item['url'] ) ? $item['url'] : '';
+			$name    = $item['name'] ?? '';
+			$url     = $item['url'] ?? '';
 			$display = $truncate_title( $name );
 			$linked  = ( $url !== '' ) && ( ! $is_last || $link_last );
 
@@ -116,7 +116,7 @@ if ( $schema === 'json-ld' ) :
 		$element = [
 			'@type'    => 'ListItem',
 			'position' => $position,
-			'name'     => isset( $item['name'] ) ? wp_strip_all_tags( $item['name'] ) : '',
+			'name'     => wp_strip_all_tags( $item['name'] ?? '' ),
 		];
 
 		if ( ! empty( $item['url'] ) ) {

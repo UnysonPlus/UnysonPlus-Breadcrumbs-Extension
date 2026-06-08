@@ -142,7 +142,7 @@ class Breadcrumbs_Builder {
 			return [];
 		}
 
-		if ( did_action( 'wp' ) == 0 ) {
+		if ( did_action( 'wp' ) === 0 ) {
 			return [];
 		}
 
@@ -271,7 +271,7 @@ class Breadcrumbs_Builder {
 				$month = get_query_var( 'monthnum' );
 				$year  = get_query_var( 'year' );
 			} else {
-				$m     = get_query_var( 'm' );
+				$m     = (string) get_query_var( 'm' );
 				$year  = substr( $m, 0, 4 );
 				$month = substr( $m, 4, 2 );
 				$day   = substr( $m, 6, 2 );
@@ -379,7 +379,7 @@ class Breadcrumbs_Builder {
 		}
 
 		foreach ( $terms as $t ) {
-			if ( $t->parent == false || ! in_array( $t->parent, $term_ids ) ) {
+			if ( ! $t->parent || ! in_array( $t->parent, $term_ids, true ) ) {
 				// remove this term
 			} else {
 				$return_terms[] = $t;

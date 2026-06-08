@@ -14,7 +14,9 @@
  * @return string
  */
 function fw_ext_get_breadcrumbs( $args = [] ) {
-	if ( ! ( $ext = fw()->extensions->get( 'breadcrumbs' ) ) ) {
+	$ext = fw()->extensions->get( 'breadcrumbs' );
+
+	if ( ! $ext ) {
 		return '';
 	}
 
