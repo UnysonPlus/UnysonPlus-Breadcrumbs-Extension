@@ -3,21 +3,29 @@
 }
 
 /**
- * Returns the breadcrumbs HTML
+ * Returns the breadcrumbs HTML.
  *
- * @param string $separator, separator symbol that will be set between elements
+ * @param string|array $args Separator string (back-compat) or an array of
+ *                           arguments accepted by FW_Extension_Breadcrumbs::render()
+ *                           (separator, prefix, home_icon, link_last, show_home,
+ *                           show_on_front, truncate, post_taxonomy,
+ *                           show_post_type_archive, schema, container_class).
  *
  * @return string
  */
-function fw_ext_get_breadcrumbs( $separator = ">" ) {
-	return fw()->extensions->get( 'breadcrumbs' )->render( $separator, false, 'breadcrumbs' );
+function fw_ext_get_breadcrumbs( $args = array() ) {
+	if ( ! ( $ext = fw()->extensions->get( 'breadcrumbs' ) ) ) {
+		return '';
+	}
+
+	return $ext->render( $args );
 }
 
 /**
- * Displays the breadcrumbs HTML
+ * Displays the breadcrumbs HTML.
  *
- * @param string $separator, separator symbol that will be set between elements
+ * @param string|array $args See fw_ext_get_breadcrumbs().
  */
-function fw_ext_breadcrumbs( $separator = ">" ) {
-	echo fw()->extensions->get( 'breadcrumbs' )->render( $separator, false, 'breadcrumbs' );
+function fw_ext_breadcrumbs( $args = array() ) {
+	echo fw_ext_get_breadcrumbs( $args );
 }
