@@ -70,7 +70,7 @@ $total = count( $items );
 			$display = $truncate_title( $name );
 			$linked  = ( $url !== '' ) && ( ! $is_last || $link_last );
 
-			$classes = array( 'breadcrumbs__item' );
+			$classes = [ 'breadcrumbs__item' ];
 			if ( $is_first ) {
 				$classes[] = 'first-item';
 			}
@@ -107,17 +107,17 @@ $total = count( $items );
 </nav>
 <?php
 if ( $schema === 'json-ld' ) :
-	$ld_elements = array();
+	$ld_elements = [];
 	$position    = 0;
 
 	foreach ( $items as $item ) {
 		$position++;
 
-		$element = array(
+		$element = [
 			'@type'    => 'ListItem',
 			'position' => $position,
 			'name'     => isset( $item['name'] ) ? wp_strip_all_tags( $item['name'] ) : '',
-		);
+		];
 
 		if ( ! empty( $item['url'] ) ) {
 			$element['item'] = esc_url_raw( $item['url'] );
@@ -126,11 +126,11 @@ if ( $schema === 'json-ld' ) :
 		$ld_elements[] = $element;
 	}
 
-	$ld = array(
+	$ld = [
 		'@context'        => 'https://schema.org',
 		'@type'           => 'BreadcrumbList',
 		'itemListElement' => $ld_elements,
-	);
+	];
 	?>
 	<script type="application/ld+json"><?php echo wp_json_encode( $ld ); ?></script>
 <?php endif; ?>

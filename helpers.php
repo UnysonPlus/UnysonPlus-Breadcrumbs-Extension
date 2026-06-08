@@ -13,7 +13,7 @@
  *
  * @return string
  */
-function fw_ext_get_breadcrumbs( $args = array() ) {
+function fw_ext_get_breadcrumbs( $args = [] ) {
 	if ( ! ( $ext = fw()->extensions->get( 'breadcrumbs' ) ) ) {
 		return '';
 	}
@@ -26,6 +26,6 @@ function fw_ext_get_breadcrumbs( $args = array() ) {
  *
  * @param string|array $args See fw_ext_get_breadcrumbs().
  */
-function fw_ext_breadcrumbs( $args = array() ) {
+function fw_ext_breadcrumbs( $args = [] ) {
 	echo fw_ext_get_breadcrumbs( $args );
 }

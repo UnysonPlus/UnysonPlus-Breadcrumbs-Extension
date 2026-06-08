@@ -4,20 +4,20 @@
 
 class Breadcrumbs_Builder {
 
-	private $settings = array();
+	private $settings = [];
 
-	public function __construct( $settings = array() ) {
-		$defaults = array(
-			'labels'                 => array(
+	public function __construct( $settings = [] ) {
+		$defaults = [
+			'labels'                 => [
 				'homepage-title' => __( 'Homepage', 'fw' ),
 				'blogpage-title' => __( 'Blog', 'fw' ),
 				'404-title'      => __( '404 Not found', 'fw' ),
-			),
+			],
 			'post_taxonomy'          => '',    // force a taxonomy for single posts ('' = auto-detect)
 			'show_post_type_archive' => true,  // prepend the CPT archive crumb for single CPT items
 			'show_home'              => true,  // include the home crumb
 			'show_on_front'          => false, // build a trail even on the site front page
-		);
+		];
 
 		if ( isset( $settings['labels'] ) && is_array( $settings['labels'] ) ) {
 			$settings['labels'] = array_merge( $defaults['labels'], $settings['labels'] );
@@ -37,11 +37,11 @@ class Breadcrumbs_Builder {
 		$page = get_post( $id );
 
 		if ( empty( $page ) || is_wp_error( $page ) ) {
-			return array();
+			return [];
 		}
 
-		$return   = array();
-		$page_obj = array();
+		$return   = [];
+		$page_obj = [];
 
 		$page_obj['type']      = 'post';
 		$page_obj['post_type'] = $page->post_type;
@@ -69,11 +69,11 @@ class Breadcrumbs_Builder {
 		$term = get_term( $id, $taxonomy );
 
 		if ( empty( $term ) || is_wp_error( $term ) ) {
-			return array();
+			return [];
 		}
 
-		$return   = array();
-		$term_obj = array();
+		$return   = [];
+		$term_obj = [];
 
 		$term_obj['type']     = 'taxonomy';
 		$term_obj['name']     = $term->name;
@@ -104,7 +104,7 @@ class Breadcrumbs_Builder {
 		if ( ! empty( $forced ) && taxonomy_exists( $forced ) ) {
 			$terms = wp_get_post_terms( $post->ID, $forced );
 		} else {
-			$slugs      = array();
+			$slugs      = [];
 			$taxonomies = get_object_taxonomies( $post->post_type, 'objects' );
 
 			if ( ! empty( $taxonomies ) ) {
@@ -115,17 +115,17 @@ class Breadcrumbs_Builder {
 				}
 			}
 
-			$terms = ! empty( $slugs ) ? wp_get_post_terms( $post->ID, $slugs ) : array();
+			$terms = ! empty( $slugs ) ? wp_get_post_terms( $post->ID, $slugs ) : [];
 		}
 
 		if ( empty( $terms ) || is_wp_error( $terms ) ) {
-			return array();
+			return [];
 		}
 
 		$lowest_term = $this->get_lowest_taxonomy_terms( $terms );
 
 		if ( empty( $lowest_term ) || ! isset( $lowest_term[0] ) ) {
-			return array();
+			return [];
 		}
 
 		$term = $lowest_term[0];
@@ -139,24 +139,24 @@ class Breadcrumbs_Builder {
 	 */
 	private function build_breadcrumbs() {
 		if ( is_admin() ) {
-			return array();
+			return [];
 		}
 
 		if ( did_action( 'wp' ) == 0 ) {
-			return array();
+			return [];
 		}
 
-		$return = array();
+		$return = [];
 
 		if ( $this->settings['show_home'] ) {
-			$return[] = array(
+			$return[] = [
 				'name' => $this->settings['labels']['homepage-title'],
 				'url'  => esc_url( home_url( '/' ) ),
 				'type' => 'front_page',
-			);
+			];
 		}
 
-		$custom_page = apply_filters( 'fw_ext_breadcrumbs_current_page', array() );
+		$custom_page = apply_filters( 'fw_ext_breadcrumbs_current_page', [] );
 
 		if ( is_array( $custom_page ) && ! empty( $custom_page ) ) {
 			$return[] = $custom_page;
@@ -166,7 +166,7 @@ class Breadcrumbs_Builder {
 		}
 
 		if ( is_404() ) {
-			$page = array();
+			$page = [];
 
 			$page['type'] = '404';
 			$page['name'] = $this->settings['labels']['404-title'];
@@ -174,7 +174,7 @@ class Breadcrumbs_Builder {
 
 			$return[] = $page;
 		} elseif ( is_search() ) {
-			$search = array();
+			$search = [];
 
 			$search['type'] = 'search';
 			$search['name'] = __( 'Searching for:', 'fw' ) . ' ' . get_search_query();
@@ -184,15 +184,15 @@ class Breadcrumbs_Builder {
 			$return[] = $search;
 		} elseif ( is_front_page() ) {
 			if ( ! $this->settings['show_on_front'] ) {
-				return array();
+				return [];
 			}
 		} elseif ( is_home() ) {
 
-			$blog = array(
+			$blog = [
 				'name' => $this->settings['labels']['blogpage-title'],
 				'url'  => fw_current_url(),
 				'type' => 'front_page'
-			);
+			];
 
 			$return[] = $blog;
 		} elseif ( is_attachment() ) {
@@ -202,11 +202,11 @@ class Breadcrumbs_Builder {
 				$return = array_merge( $return, array_reverse( $this->get_page_hierarchy( $post->post_parent ) ) );
 			}
 
-			$return[] = array(
+			$return[] = [
 				'type' => 'attachment',
 				'name' => get_the_title( $post->ID ),
 				'url'  => get_permalink( $post->ID ),
-			);
+			];
 		} elseif ( is_page() ) {
 			global $post;
 			$return = array_merge( $return, array_reverse( $this->get_page_hierarchy( $post->ID ) ) );
@@ -220,11 +220,11 @@ class Breadcrumbs_Builder {
 					$archive_link = get_post_type_archive_link( $post->post_type );
 
 					if ( $archive_link ) {
-						$return[] = array(
+						$return[] = [
 							'type' => 'post_type_archive',
 							'name' => $post_type_obj->labels->name,
 							'url'  => $archive_link,
-						);
+						];
 					}
 				}
 			}
@@ -240,10 +240,10 @@ class Breadcrumbs_Builder {
 			$term    = get_term_by( 'slug', $term_id, 'post_tag' );
 
 			if ( empty( $term ) || is_wp_error( $term ) ) {
-				return array();
+				return [];
 			}
 
-			$tag = array();
+			$tag = [];
 
 			$tag['type']     = 'taxonomy';
 			$tag['name']     = $term->name;
@@ -255,7 +255,7 @@ class Breadcrumbs_Builder {
 			$taxonomy = get_query_var( 'taxonomy' );
 			$return   = array_merge( $return, array_reverse( $this->get_term_hierarchy( $term_id, $taxonomy ) ) );
 		} elseif ( is_author() ) {
-			$author = array();
+			$author = [];
 
 			$author['name'] = get_queried_object()->data->display_name;
 			$author['id']   = get_queried_object()->data->ID;
@@ -264,7 +264,7 @@ class Breadcrumbs_Builder {
 
 			$return[] = $author;
 		} elseif ( is_date() ) {
-			$date = array();
+			$date = [];
 
 			if ( get_option( 'permalink_structure' ) ) {
 				$day   = get_query_var( 'day' );
@@ -304,20 +304,20 @@ class Breadcrumbs_Builder {
 		} elseif ( function_exists( 'is_shop' ) && is_shop() ) {
 			$shop_id = function_exists( 'wc_get_page_id' ) ? wc_get_page_id( 'shop' ) : 0;
 
-			$return[] = array(
+			$return[] = [
 				'type' => 'shop',
 				'name' => $shop_id ? get_the_title( $shop_id ) : __( 'Shop', 'fw' ),
 				'url'  => $shop_id ? get_permalink( $shop_id ) : get_post_type_archive_link( 'product' ),
-			);
+			];
 		} elseif ( is_post_type_archive() ) {
 			$obj = get_queried_object();
 
 			if ( $obj instanceof WP_Post_Type ) {
-				$return[] = array(
+				$return[] = [
 					'type' => 'post_type_archive',
 					'name' => $obj->labels->name,
 					'url'  => get_post_type_archive_link( $obj->name ),
-				);
+				];
 			}
 		} elseif ( is_archive() ) {
 			$title = post_type_archive_title( '', false );
@@ -327,11 +327,11 @@ class Breadcrumbs_Builder {
 			}
 
 			if ( ! empty( $title ) ) {
-				$return[] = array(
+				$return[] = [
 					'type' => 'archive',
 					'name' => $title,
 					'url'  => fw_current_url(),
-				);
+				];
 			}
 		}
 
@@ -344,7 +344,7 @@ class Breadcrumbs_Builder {
 
 		/* Reserved for pagination
 		 * global $wp_query;
-		$paged = array();
+		$paged = [];
 		$paged['name'] = get_query_var('paged');
 		$paged['max_pages'] = $wp_query->max_num_pages;
 		if( intval( $paged['name'] ) > 0 ){
@@ -371,8 +371,8 @@ class Breadcrumbs_Builder {
 	}
 
 	private function filter_terms( $terms ) {
-		$return_terms = array();
-		$term_ids     = array();
+		$return_terms = [];
+		$term_ids     = [];
 
 		foreach ( $terms as $t ) {
 			$term_ids[] = $t->term_id;

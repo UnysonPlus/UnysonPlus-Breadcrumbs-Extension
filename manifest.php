@@ -2,7 +2,7 @@
 	die( 'Forbidden' );
 }
 
-$manifest = array();
+$manifest = [];
 
 $manifest['name']        = __( 'Breadcrumbs', 'fw' );
 $manifest['slug']        = 'unysonplus-breadcrumbs';
@@ -11,7 +11,7 @@ $manifest['description'] = __(
 	'fw'
 );
 
-$manifest['version']     = '1.0.20';
+$manifest['version']     = '1.0.21';
 $manifest['display']     = true;
 $manifest['standalone']  = true;
 

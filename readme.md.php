@@ -53,7 +53,7 @@ All settings can be overridden per shortcode, e.g.:
 Both <code>fw_ext_breadcrumbs()</code> and <code>fw_ext_get_breadcrumbs()</code> accept an
 arguments array that overrides the saved settings for a single call:
 
-<code>&lt;?php fw_ext_breadcrumbs( array( 'separator' =&gt; ' &amp;raquo; ', 'home_icon' =&gt; 'dashicons dashicons-admin-home', 'schema' =&gt; 'json-ld' ) ); ?&gt;</code>
+<code>&lt;?php fw_ext_breadcrumbs( [ 'separator' =&gt; ' &amp;raquo; ', 'home_icon' =&gt; 'dashicons dashicons-admin-home', 'schema' =&gt; 'json-ld' ] ); ?&gt;</code>
 
 Available arguments: <strong>separator</strong>, <strong>prefix</strong>, <strong>home_icon</strong>,
 <strong>link_last</strong>, <strong>show_home</strong>, <strong>show_on_front</strong>,

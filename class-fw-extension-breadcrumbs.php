@@ -8,7 +8,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 	 * @internal
 	 */
 	public function _init() {
-		add_shortcode( 'breadcrumbs', array( $this, '_shortcode' ) );
+		add_shortcode( 'breadcrumbs', [ $this, '_shortcode' ] );
 	}
 
 	/**
@@ -19,7 +19,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 	public function get_settings() {
 		$name = $this->get_name();
 
-		return array(
+		return [
 			'homepage-title'         => fw_get_db_ext_settings_option( $name, 'homepage-title' ),
 			'blogpage-title'         => fw_get_db_ext_settings_option( $name, 'blogpage-title' ),
 			'404-title'              => fw_get_db_ext_settings_option( $name, '404-title' ),
@@ -33,7 +33,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 			'post_taxonomy'          => fw_get_db_ext_settings_option( $name, 'post_taxonomy' ),
 			'show_post_type_archive' => fw_get_db_ext_settings_option( $name, 'show_post_type_archive' ),
 			'schema'                 => fw_get_db_ext_settings_option( $name, 'schema' ),
-		);
+		];
 	}
 
 	/**
@@ -44,7 +44,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 	 * @return array
 	 */
 	private function get_default_args( $settings ) {
-		return array(
+		return [
 			'separator'              => ( isset( $settings['separator'] ) && $settings['separator'] !== '' ) ? $settings['separator'] : '>',
 			'prefix'                 => isset( $settings['prefix'] ) ? $settings['prefix'] : '',
 			'home_icon'              => isset( $settings['home_icon'] ) ? $settings['home_icon'] : '',
@@ -57,7 +57,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 			'schema'                 => isset( $settings['schema'] ) ? $settings['schema'] : 'microdata',
 			'container_class'        => 'breadcrumbs',
 			'aria_label'             => __( 'Breadcrumb', 'fw' ),
-		);
+		];
 	}
 
 	/**
@@ -74,10 +74,10 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 	 *
 	 * @return string
 	 */
-	public function render( $args = array() ) {
+	public function render( $args = [] ) {
 		// Back-compat: the old signature accepted a separator string.
 		if ( ! is_array( $args ) ) {
-			$args = array( 'separator' => (string) $args );
+			$args = [ 'separator' => (string) $args ];
 		}
 
 		$settings = $this->get_settings();
@@ -91,17 +91,17 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 		$args = array_merge( $defaults, $overrides );
 		$args = apply_filters( 'fw_ext_breadcrumbs_args', $args );
 
-		$breadcrumbs = new Breadcrumbs_Builder( array(
-			'labels'                 => array(
+		$breadcrumbs = new Breadcrumbs_Builder( [
+			'labels'                 => [
 				'homepage-title' => $settings['homepage-title'],
 				'blogpage-title' => $settings['blogpage-title'],
 				'404-title'      => $settings['404-title'],
-			),
+			],
 			'post_taxonomy'          => $args['post_taxonomy'],
 			'show_post_type_archive' => $args['show_post_type_archive'],
 			'show_home'              => $args['show_home'],
 			'show_on_front'          => $args['show_on_front'],
-		) );
+		] );
 
 		$items = $breadcrumbs->get_breadcrumbs();
 		$items = apply_filters( 'fw_ext_breadcrumbs_items', $items, $args );
@@ -110,10 +110,10 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 			return '';
 		}
 
-		return $this->render_view( 'breadcrumbs', array(
+		return $this->render_view( 'breadcrumbs', [
 			'items' => $items,
 			'args'  => $args,
-		) );
+		] );
 	}
 
 	/**
@@ -124,7 +124,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 	 * @return string
 	 */
 	public function _shortcode( $atts ) {
-		$atts = shortcode_atts( array(
+		$atts = shortcode_atts( [
 			'separator'              => null,
 			'prefix'                 => null,
 			'home_icon'              => null,
@@ -136,10 +136,10 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 			'show_post_type_archive' => null,
 			'schema'                 => null,
 			'class'                  => null,
-		), $atts, 'breadcrumbs' );
+		], $atts, 'breadcrumbs' );
 
-		$bool_keys = array( 'link_last', 'show_home', 'show_on_front', 'show_post_type_archive' );
-		$args      = array();
+		$bool_keys = [ 'link_last', 'show_home', 'show_on_front', 'show_post_type_archive' ];
+		$args      = [];
 
 		foreach ( $atts as $key => $value ) {
 			if ( $value === null ) {
