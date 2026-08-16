@@ -11,7 +11,7 @@ $manifest['description'] = __(
 	'fw'
 );
 
-$manifest['version']     = '1.0.23';
+$manifest['version']     = '1.0.24';
 $manifest['display']     = true;
 $manifest['standalone']  = true;
 
@@ -33,6 +33,26 @@ $manifest['requires_wp']  = '5.8';
 /**
  * Changelog
  * -----------------------------------------------------------------------------
+ * 1.0.24 - Blog crumb + primary-term support. When a static front page and a
+ *          separate Posts page are configured, the Posts page is now inserted
+ *          before single posts, category, tag, author and date archives (Home /
+ *          Blog / Category / Post) — previously it was skipped entirely, which
+ *          was the last significant gap against the dedicated SEO plugins. It is
+ *          controlled by a new "Show blog item" setting and a matching show_blog
+ *          argument / shortcode attribute, both defaulting to on. A post filed in
+ *          several unrelated terms has no deepest term, so the taxonomy crumb used
+ *          to be picked arbitrarily and could change between requests; an
+ *          editor-chosen primary term recorded by Yoast or Rank Math is now
+ *          honoured first, with the meta keys exposed through the new
+ *          fw_ext_breadcrumbs_primary_term_meta_keys filter. Structured data is no
+ *          longer emitted on 404 and search results, truncated titles no longer
+ *          leak into the microdata name (the full title moves to a meta tag while
+ *          only the visible text is trimmed), and the current item now carries
+ *          aria-current="page". WooCommerce product crumbs use the Shop page title
+ *          instead of the generic post type label. Also hardened: the parent walks
+ *          for posts and terms are cycle-guarded, and the queried object is type
+ *          checked instead of relying on a global $post that may be null.
+ *
  * 1.0.18 - Major flexibility + SEO upgrade. Migrated the structured data from the
  *          long-deprecated data-vocabulary.org markup to schema.org BreadcrumbList,
  *          selectable as Microdata, JSON-LD, or none (data-vocabulary.org no longer

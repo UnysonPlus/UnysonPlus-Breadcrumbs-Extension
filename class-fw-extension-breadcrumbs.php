@@ -17,23 +17,33 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 	 * @return array
 	 */
 	public function get_settings() {
-		$name = $this->get_name();
+		// One keyless read, then plain array lookups — not one DB query helper per key.
+		$values = (array) fw_get_db_ext_settings_option( $this->get_name() );
 
-		return [
-			'homepage-title'         => fw_get_db_ext_settings_option( $name, 'homepage-title' ),
-			'blogpage-title'         => fw_get_db_ext_settings_option( $name, 'blogpage-title' ),
-			'404-title'              => fw_get_db_ext_settings_option( $name, '404-title' ),
-			'separator'              => fw_get_db_ext_settings_option( $name, 'separator' ),
-			'prefix'                 => fw_get_db_ext_settings_option( $name, 'prefix' ),
-			'home_icon'              => fw_get_db_ext_settings_option( $name, 'home_icon' ),
-			'show_home'              => fw_get_db_ext_settings_option( $name, 'show_home' ),
-			'link_last'              => fw_get_db_ext_settings_option( $name, 'link_last' ),
-			'show_on_front'          => fw_get_db_ext_settings_option( $name, 'show_on_front' ),
-			'truncate'               => fw_get_db_ext_settings_option( $name, 'truncate' ),
-			'post_taxonomy'          => fw_get_db_ext_settings_option( $name, 'post_taxonomy' ),
-			'show_post_type_archive' => fw_get_db_ext_settings_option( $name, 'show_post_type_archive' ),
-			'schema'                 => fw_get_db_ext_settings_option( $name, 'schema' ),
+		$keys = [
+			'homepage-title',
+			'blogpage-title',
+			'404-title',
+			'separator',
+			'prefix',
+			'home_icon',
+			'show_home',
+			'link_last',
+			'show_on_front',
+			'show_blog',
+			'truncate',
+			'post_taxonomy',
+			'show_post_type_archive',
+			'schema',
 		];
+
+		$settings = [];
+
+		foreach ( $keys as $key ) {
+			$settings[ $key ] = $values[ $key ] ?? null;
+		}
+
+		return $settings;
 	}
 
 	/**
@@ -51,6 +61,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 			'link_last'              => (bool) ( $settings['link_last'] ?? false ),
 			'show_home'              => (bool) ( $settings['show_home'] ?? true ),
 			'show_on_front'          => (bool) ( $settings['show_on_front'] ?? false ),
+			'show_blog'              => (bool) ( $settings['show_blog'] ?? true ),
 			'truncate'               => (int) ( $settings['truncate'] ?? 0 ),
 			'post_taxonomy'          => $settings['post_taxonomy'] ?? '',
 			'show_post_type_archive' => (bool) ( $settings['show_post_type_archive'] ?? true ),
@@ -67,7 +78,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 	 * arguments that override the saved settings for this single call:
 	 *
 	 *   separator, prefix, home_icon, link_last, show_home, show_on_front,
-	 *   truncate, post_taxonomy, show_post_type_archive, schema,
+	 *   show_blog, truncate, post_taxonomy, show_post_type_archive, schema,
 	 *   container_class, aria_label
 	 *
 	 * @param string|array $args Separator string (back-compat) or args array.
@@ -99,6 +110,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 			'show_post_type_archive' => $args['show_post_type_archive'],
 			'show_home'              => $args['show_home'],
 			'show_on_front'          => $args['show_on_front'],
+			'show_blog'              => $args['show_blog'],
 		] );
 
 		$items = $breadcrumbs->get_breadcrumbs();
@@ -129,6 +141,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 			'link_last'              => null,
 			'show_home'              => null,
 			'show_on_front'          => null,
+			'show_blog'              => null,
 			'truncate'               => null,
 			'post_taxonomy'          => null,
 			'show_post_type_archive' => null,
@@ -136,7 +149,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 			'class'                  => null,
 		], $atts, 'breadcrumbs' );
 
-		$bool_keys = [ 'link_last', 'show_home', 'show_on_front', 'show_post_type_archive' ];
+		$bool_keys = [ 'link_last', 'show_home', 'show_on_front', 'show_blog', 'show_post_type_archive' ];
 		$args      = [];
 
 		foreach ( $atts as $key => $value ) {
@@ -155,7 +168,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 			}
 		}
 
-		return fw()->extensions->get( 'breadcrumbs' )->render( $args );
+		return $this->render( $args );
 	}
 
 	/**

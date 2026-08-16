@@ -36,6 +36,17 @@ $schema          = $args['schema'] ?? 'microdata';
 $container_class = ( $args['container_class'] ?? '' ) !== '' ? $args['container_class'] : 'breadcrumbs';
 $aria_label      = $args['aria_label'] ?? __( 'Breadcrumb', 'fw' );
 
+/**
+ * A BreadcrumbList ending in "404 Not found" or "Searching for: …" describes a
+ * page that should never be indexed, so structured data is suppressed there.
+ */
+foreach ( $items as $item ) {
+	if ( in_array( $item['type'] ?? '', [ '404', 'search' ], true ) ) {
+		$schema = 'none';
+		break;
+	}
+}
+
 $microdata = ( $schema === 'microdata' );
 
 $truncate_title = static function ( $text ) use ( $truncate ) {
@@ -81,14 +92,28 @@ $total = count( $items );
 			$icon = ( $is_first && $home_icon !== '' )
 				? '<i class="breadcrumbs__home-icon ' . esc_attr( $home_icon ) . '" aria-hidden="true"></i> '
 				: '';
+
+			/**
+			 * Truncation is a display concern — search engines must still receive the
+			 * full title, so a trimmed crumb moves itemprop="name" onto a <meta>.
+			 */
+			$truncated = ( $display !== $name );
+			$name_attr = ( $microdata && ! $truncated ) ? ' itemprop="name"' : '';
+			$name_meta = ( $microdata && $truncated )
+				? '<meta itemprop="name" content="' . esc_attr( $name ) . '"/>'
+				: '';
+
+			$current_attr = $is_last ? ' aria-current="page"' : '';
 			?>
 			<li class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"<?php echo $microdata ? ' itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"' : ''; ?>>
 				<?php if ( $linked ) : ?>
-					<a class="breadcrumbs__link" href="<?php echo esc_url( $url ); ?>"<?php echo $microdata ? ' itemprop="item"' : ''; ?>>
-						<?php echo $icon; // already escaped ?><span<?php echo $microdata ? ' itemprop="name"' : ''; ?>><?php echo esc_html( $display ); ?></span>
+					<a class="breadcrumbs__link" href="<?php echo esc_url( $url ); ?>"<?php echo $current_attr; ?><?php echo $microdata ? ' itemprop="item"' : ''; ?>>
+						<?php echo $icon; // already escaped ?><span<?php echo $name_attr; ?>><?php echo esc_html( $display ); ?></span>
 					</a>
+					<?php echo $name_meta; // already escaped ?>
 				<?php else : ?>
-					<span class="breadcrumbs__current"<?php echo $microdata ? ' itemprop="name"' : ''; ?>><?php echo $icon; // already escaped ?><?php echo esc_html( $display ); ?></span>
+					<span class="breadcrumbs__current"<?php echo $current_attr; ?><?php echo $name_attr; ?>><?php echo $icon; // already escaped ?><?php echo esc_html( $display ); ?></span>
+					<?php echo $name_meta; // already escaped ?>
 					<?php if ( $microdata && $url !== '' ) : ?>
 						<meta itemprop="item" content="<?php echo esc_url( $url ); ?>"/>
 					<?php endif; ?>

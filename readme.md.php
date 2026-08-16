@@ -57,7 +57,8 @@ arguments array that overrides the saved settings for a single call:
 
 Available arguments: <strong>separator</strong>, <strong>prefix</strong>, <strong>home_icon</strong>,
 <strong>link_last</strong>, <strong>show_home</strong>, <strong>show_on_front</strong>,
-<strong>truncate</strong>, <strong>post_taxonomy</strong>, <strong>show_post_type_archive</strong>,
-<strong>schema</strong> (microdata / json-ld / none), <strong>container_class</strong>.
+<strong>show_blog</strong>, <strong>truncate</strong>, <strong>post_taxonomy</strong>,
+<strong>show_post_type_archive</strong>, <strong>schema</strong> (microdata / json-ld / none),
+<strong>container_class</strong>.
 
 Passing a string is still supported for backward compatibility (it is treated as the separator).

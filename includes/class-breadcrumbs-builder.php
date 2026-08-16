@@ -17,6 +17,7 @@ class Breadcrumbs_Builder {
 			'show_post_type_archive' => true,  // prepend the CPT archive crumb for single CPT items
 			'show_home'              => true,  // include the home crumb
 			'show_on_front'          => false, // build a trail even on the site front page
+			'show_blog'              => true,  // prepend the Posts page crumb on post-related views
 		];
 
 		if ( isset( $settings['labels'] ) && is_array( $settings['labels'] ) ) {
@@ -30,15 +31,27 @@ class Breadcrumbs_Builder {
 	 * Determine if the page has parents and in case it has, adds all page parents hierarchy
 	 *
 	 * @param $id , page id
+	 * @param array $seen Post ids already walked, guards against parent cycles.
 	 *
 	 * @return array
 	 */
-	private function get_page_hierarchy( $id ) {
+	private function get_page_hierarchy( $id, $seen = [] ) {
 		$page = get_post( $id );
 
 		if ( empty( $page ) || is_wp_error( $page ) ) {
 			return [];
 		}
+
+		/**
+		 * A cyclic (or absurdly deep) post_parent chain — possible after a bad
+		 * import or a direct DB edit — would otherwise recurse until the stack
+		 * blows up and takes the whole page with it.
+		 */
+		if ( isset( $seen[ $page->ID ] ) || count( $seen ) >= 50 ) {
+			return [];
+		}
+
+		$seen[ $page->ID ] = true;
 
 		$return   = [];
 		$page_obj = [];
@@ -51,7 +64,7 @@ class Breadcrumbs_Builder {
 
 		$return[] = $page_obj;
 		if ( $page->post_parent > 0 ) {
-			$return = array_merge( $return, $this->get_page_hierarchy( $page->post_parent ) );
+			$return = array_merge( $return, $this->get_page_hierarchy( $page->post_parent, $seen ) );
 		}
 
 		return $return;
@@ -62,15 +75,23 @@ class Breadcrumbs_Builder {
 	 *
 	 * @param $id , term id
 	 * @param $taxonomy , term taxonomy name
+	 * @param array $seen Term ids already walked, guards against parent cycles.
 	 *
 	 * @return array
 	 */
-	private function get_term_hierarchy( $id, $taxonomy ) {
+	private function get_term_hierarchy( $id, $taxonomy, $seen = [] ) {
 		$term = get_term( $id, $taxonomy );
 
 		if ( empty( $term ) || is_wp_error( $term ) ) {
 			return [];
 		}
+
+		// Same cycle guard as get_page_hierarchy().
+		if ( isset( $seen[ $term->term_id ] ) || count( $seen ) >= 50 ) {
+			return [];
+		}
+
+		$seen[ $term->term_id ] = true;
 
 		$return   = [];
 		$term_obj = [];
@@ -84,7 +105,7 @@ class Breadcrumbs_Builder {
 		$return[] = $term_obj;
 
 		if ( $term->parent > 0 ) {
-			$return = array_merge( $return, $this->get_term_hierarchy( $term->parent, $taxonomy ) );
+			$return = array_merge( $return, $this->get_term_hierarchy( $term->parent, $taxonomy, $seen ) );
 		}
 
 		return $return;
@@ -102,7 +123,7 @@ class Breadcrumbs_Builder {
 		$forced = $this->settings['post_taxonomy'];
 
 		if ( ! empty( $forced ) && taxonomy_exists( $forced ) ) {
-			$terms = wp_get_post_terms( $post->ID, $forced );
+			$slugs = [ $forced ];
 		} else {
 			$slugs      = [];
 			$taxonomies = get_object_taxonomies( $post->post_type, 'objects' );
@@ -114,23 +135,150 @@ class Breadcrumbs_Builder {
 					}
 				}
 			}
-
-			$terms = ! empty( $slugs ) ? wp_get_post_terms( $post->ID, $slugs ) : [];
 		}
 
-		if ( empty( $terms ) || is_wp_error( $terms ) ) {
+		if ( empty( $slugs ) ) {
 			return [];
 		}
 
-		$lowest_term = $this->get_lowest_taxonomy_terms( $terms );
+		/**
+		 * A post in several unrelated terms has no "deepest" one, so the fallback
+		 * below would pick an arbitrary term and the crumb would be unstable.
+		 * An editor-chosen primary term (Yoast / Rank Math) is authoritative.
+		 */
+		$term = $this->get_primary_term( $post, $slugs );
 
-		if ( empty( $lowest_term ) || ! isset( $lowest_term[0] ) ) {
-			return [];
+		if ( ! $term ) {
+			$terms = wp_get_post_terms( $post->ID, $slugs );
+
+			if ( empty( $terms ) || is_wp_error( $terms ) ) {
+				return [];
+			}
+
+			$lowest_term = $this->get_lowest_taxonomy_terms( $terms );
+
+			if ( empty( $lowest_term ) || ! isset( $lowest_term[0] ) ) {
+				return [];
+			}
+
+			$term = $lowest_term[0];
 		}
-
-		$term = $lowest_term[0];
 
 		return array_reverse( $this->get_term_hierarchy( $term->term_id, $term->taxonomy ) );
+	}
+
+	/**
+	 * The primary term an SEO plugin recorded for this post, if any.
+	 *
+	 * @param WP_Post $post
+	 * @param array   $taxonomies Candidate taxonomy slugs, in priority order.
+	 *
+	 * @return WP_Term|null
+	 */
+	private function get_primary_term( $post, $taxonomies ) {
+		$meta_keys = apply_filters( 'fw_ext_breadcrumbs_primary_term_meta_keys', [
+			'_yoast_wpseo_primary_%s',
+			'rank_math_primary_%s',
+		] );
+
+		foreach ( (array) $taxonomies as $taxonomy ) {
+			foreach ( (array) $meta_keys as $meta_key ) {
+				$term_id = (int) get_post_meta( $post->ID, sprintf( $meta_key, $taxonomy ), true );
+
+				if ( ! $term_id ) {
+					continue;
+				}
+
+				$term = get_term( $term_id, $taxonomy );
+
+				if ( $term && ! is_wp_error( $term ) ) {
+					return $term;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * The Posts page crumb, for the views that live "inside" the blog.
+	 *
+	 * Only applies when a static front page + a separate Posts page are configured;
+	 * otherwise the blog IS the home crumb and a second one would be redundant.
+	 *
+	 * @return array Zero or one crumb, ready to array_merge().
+	 */
+	private function get_blog_crumb() {
+		if ( ! $this->settings['show_blog'] ) {
+			return [];
+		}
+
+		if ( get_option( 'show_on_front' ) !== 'page' ) {
+			return [];
+		}
+
+		$blog_id = (int) get_option( 'page_for_posts' );
+
+		if ( ! $blog_id || $blog_id === (int) get_option( 'page_on_front' ) ) {
+			return [];
+		}
+
+		return [
+			[
+				'type' => 'blog',
+				'name' => $this->settings['labels']['blogpage-title'],
+				'url'  => get_permalink( $blog_id ),
+				'id'   => $blog_id,
+			],
+		];
+	}
+
+	/**
+	 * The archive crumb for a custom post type, if it has an archive.
+	 *
+	 * WooCommerce products are special-cased: their archive is the Shop page, so
+	 * the crumb uses that page's title/permalink rather than the "Products" label
+	 * — matching what the is_shop() branch renders on the shop page itself.
+	 *
+	 * @param string $post_type
+	 *
+	 * @return array Zero or one crumb, ready to array_merge().
+	 */
+	private function get_post_type_archive_crumb( $post_type ) {
+		if ( $post_type === 'product' && function_exists( 'wc_get_page_id' ) ) {
+			$shop_id = (int) wc_get_page_id( 'shop' );
+
+			if ( $shop_id > 0 ) {
+				return [
+					[
+						'type' => 'post_type_archive',
+						'name' => get_the_title( $shop_id ),
+						'url'  => get_permalink( $shop_id ),
+						'id'   => $shop_id,
+					],
+				];
+			}
+		}
+
+		$post_type_obj = get_post_type_object( $post_type );
+
+		if ( ! $post_type_obj || empty( $post_type_obj->has_archive ) ) {
+			return [];
+		}
+
+		$archive_link = get_post_type_archive_link( $post_type );
+
+		if ( ! $archive_link ) {
+			return [];
+		}
+
+		return [
+			[
+				'type' => 'post_type_archive',
+				'name' => $post_type_obj->labels->name,
+				'url'  => $archive_link,
+			],
+		];
 	}
 
 	/**
@@ -151,7 +299,7 @@ class Breadcrumbs_Builder {
 		if ( $this->settings['show_home'] ) {
 			$return[] = [
 				'name' => $this->settings['labels']['homepage-title'],
-				'url'  => esc_url( home_url( '/' ) ),
+				'url'  => home_url( '/' ),
 				'type' => 'front_page',
 			];
 		}
@@ -187,16 +335,22 @@ class Breadcrumbs_Builder {
 				return [];
 			}
 		} elseif ( is_home() ) {
+			$blog_crumb = $this->get_blog_crumb();
 
-			$blog = [
-				'name' => $this->settings['labels']['blogpage-title'],
-				'url'  => fw_current_url(),
-				'type' => 'front_page'
-			];
-
-			$return[] = $blog;
+			// No dedicated Posts page configured — fall back to the current URL.
+			$return[] = $blog_crumb
+				? $blog_crumb[0]
+				: [
+					'name' => $this->settings['labels']['blogpage-title'],
+					'url'  => fw_current_url(),
+					'type' => 'blog',
+				];
 		} elseif ( is_attachment() ) {
-			global $post;
+			$post = get_queried_object();
+
+			if ( ! $post instanceof WP_Post ) {
+				return [];
+			}
 
 			if ( $post->post_parent ) {
 				$return = array_merge( $return, array_reverse( $this->get_page_hierarchy( $post->post_parent ) ) );
@@ -208,25 +362,24 @@ class Breadcrumbs_Builder {
 				'url'  => get_permalink( $post->ID ),
 			];
 		} elseif ( is_page() ) {
-			global $post;
+			$post = get_queried_object();
+
+			if ( ! $post instanceof WP_Post ) {
+				return [];
+			}
+
 			$return = array_merge( $return, array_reverse( $this->get_page_hierarchy( $post->ID ) ) );
 		} elseif ( is_single() ) {
-			global $post;
+			$post = get_queried_object();
 
-			if ( $this->settings['show_post_type_archive'] ) {
-				$post_type_obj = get_post_type_object( $post->post_type );
+			if ( ! $post instanceof WP_Post ) {
+				return [];
+			}
 
-				if ( $post_type_obj && ! empty( $post_type_obj->has_archive ) ) {
-					$archive_link = get_post_type_archive_link( $post->post_type );
-
-					if ( $archive_link ) {
-						$return[] = [
-							'type' => 'post_type_archive',
-							'name' => $post_type_obj->labels->name,
-							'url'  => $archive_link,
-						];
-					}
-				}
+			if ( $post->post_type === 'post' ) {
+				$return = array_merge( $return, $this->get_blog_crumb() );
+			} elseif ( $this->settings['show_post_type_archive'] ) {
+				$return = array_merge( $return, $this->get_post_type_archive_crumb( $post->post_type ) );
 			}
 
 			$return = array_merge( $return, $this->get_single_term_trail( $post ) );
@@ -234,36 +387,51 @@ class Breadcrumbs_Builder {
 
 		} elseif ( is_category() ) {
 			$term_id = get_query_var( 'cat' );
+			$return  = array_merge( $return, $this->get_blog_crumb() );
 			$return  = array_merge( $return, array_reverse( $this->get_term_hierarchy( $term_id, 'category' ) ) );
 		} elseif ( is_tag() ) {
-			$term_id = get_query_var( 'tag' );
-			$term    = get_term_by( 'slug', $term_id, 'post_tag' );
+			$term_slug = get_query_var( 'tag' );
+			$term      = get_term_by( 'slug', $term_slug, 'post_tag' );
 
 			if ( empty( $term ) || is_wp_error( $term ) ) {
 				return [];
 			}
 
-			$tag = [];
+			$return = array_merge( $return, $this->get_blog_crumb() );
 
-			$tag['type']     = 'taxonomy';
-			$tag['name']     = $term->name;
-			$tag['url']      = get_term_link( $term_id, 'post_tag' );
-			$tag['taxonomy'] = 'post_tag';
-			$return[]        = $tag;
+			$return[] = [
+				'type'     => 'taxonomy',
+				'name'     => $term->name,
+				'id'       => $term->term_id,
+				'url'      => get_term_link( $term, 'post_tag' ),
+				'taxonomy' => 'post_tag',
+			];
 		} elseif ( is_tax() ) {
-			$term_id  = get_queried_object()->term_id;
-			$taxonomy = get_query_var( 'taxonomy' );
-			$return   = array_merge( $return, array_reverse( $this->get_term_hierarchy( $term_id, $taxonomy ) ) );
+			$term = get_queried_object();
+
+			if ( ! $term instanceof WP_Term ) {
+				return [];
+			}
+
+			$return = array_merge( $return, array_reverse( $this->get_term_hierarchy( $term->term_id, $term->taxonomy ) ) );
 		} elseif ( is_author() ) {
-			$author = [];
+			$user = get_queried_object();
 
-			$author['name'] = get_queried_object()->data->display_name;
-			$author['id']   = get_queried_object()->data->ID;
-			$author['url']  = get_author_posts_url( $author['id'], get_queried_object()->data->user_nicename );
-			$author['type'] = 'author';
+			if ( ! $user instanceof WP_User ) {
+				return [];
+			}
 
-			$return[] = $author;
+			$return = array_merge( $return, $this->get_blog_crumb() );
+
+			$return[] = [
+				'name' => $user->display_name,
+				'id'   => $user->ID,
+				'url'  => get_author_posts_url( $user->ID, $user->user_nicename ),
+				'type' => 'author',
+			];
 		} elseif ( is_date() ) {
+			$return = array_merge( $return, $this->get_blog_crumb() );
+
 			$date = [];
 
 			if ( get_option( 'permalink_structure' ) ) {
@@ -313,11 +481,7 @@ class Breadcrumbs_Builder {
 			$obj = get_queried_object();
 
 			if ( $obj instanceof WP_Post_Type ) {
-				$return[] = [
-					'type' => 'post_type_archive',
-					'name' => $obj->labels->name,
-					'url'  => get_post_type_archive_link( $obj->name ),
-				];
+				$return = array_merge( $return, $this->get_post_type_archive_crumb( $obj->name ) );
 			}
 		} elseif ( is_archive() ) {
 			$title = post_type_archive_title( '', false );
@@ -340,17 +504,6 @@ class Breadcrumbs_Builder {
 				$return[ $key ]['name'] = __( 'No title', 'fw' );
 			}
 		}
-
-
-		/* Reserved for pagination
-		 * global $wp_query;
-		$paged = [];
-		$paged['name'] = get_query_var('paged');
-		$paged['max_pages'] = $wp_query->max_num_pages;
-		if( intval( $paged['name'] ) > 0 ){
-			$paged['name'] = __('Page', 'fw') . ' ' . $paged['name'];
-			$return[] = $paged;
-		}*/
 
 		$return = apply_filters( 'fw_ext_breadcrumbs_build', $return );
 

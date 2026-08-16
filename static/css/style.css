@@ -19,7 +19,7 @@
 }
 
 .breadcrumbs__prefix {
-	margin-right: .5em;
+	margin-inline-end: .5em;
 	opacity: .75;
 }
 
@@ -38,7 +38,7 @@
 }
 
 .breadcrumbs__home-icon {
-	margin-right: .35em;
+	margin-inline-end: .35em;
 }
 
 .breadcrumbs .last-item .breadcrumbs__current {
