@@ -98,6 +98,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 		$overrides = array_filter( $args, static fn( $value ) => $value !== null );
 
 		$args = array_merge( $defaults, $overrides );
+		/** Filters the merged breadcrumb arguments before the trail is built, allowing overrides of defaults and settings. */
 		$args = apply_filters( 'fw_ext_breadcrumbs_args', $args );
 
 		$breadcrumbs = new Breadcrumbs_Builder( [
@@ -114,6 +115,7 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 		] );
 
 		$items = $breadcrumbs->get_breadcrumbs();
+		/** Filters the final breadcrumb items array before rendering, receiving the resolved trail and build args. */
 		$items = apply_filters( 'fw_ext_breadcrumbs_items', $items, $args );
 
 		if ( empty( $items ) ) {

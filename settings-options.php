@@ -2,6 +2,7 @@
 	die( 'Forbidden' );
 }
 
+/** Filters the default breadcrumb settings values (homepage/blog/404 titles, separator, prefix). */
 $default_values = apply_filters( 'fw_ext_breadcrumbs_settings_options_default_values', [
 	'homepage-title' => __( 'Homepage', 'fw' ),
 	'blogpage-title' => __( 'Blog', 'fw' ),
@@ -11,6 +12,7 @@ $default_values = apply_filters( 'fw_ext_breadcrumbs_settings_options_default_va
 ] );
 
 $options = [
+	/** Filters options inserted before the breadcrumbs settings so extensions can prepend settings fields. */
 	apply_filters( 'fw:ext:breadcrumbs:settings-options:before', [] ),
 
 	'general_box' => [
@@ -143,5 +145,6 @@ $options = [
 		],
 	],
 
+	/** Filters options appended after the breadcrumbs settings so extensions can add trailing settings fields. */
 	apply_filters( 'fw:ext:breadcrumbs:settings-options:after', [] ),
 ];

@@ -176,6 +176,7 @@ class Breadcrumbs_Builder {
 	 * @return WP_Term|null
 	 */
 	private function get_primary_term( $post, $taxonomies ) {
+		/** Filters the meta-key patterns used to detect an SEO primary term (Yoast, Rank Math) for the breadcrumb. */
 		$meta_keys = apply_filters( 'fw_ext_breadcrumbs_primary_term_meta_keys', [
 			'_yoast_wpseo_primary_%s',
 			'rank_math_primary_%s',
@@ -304,10 +305,12 @@ class Breadcrumbs_Builder {
 			];
 		}
 
+		/** Filters a custom current-page crumb, letting listeners inject their own final breadcrumb item. */
 		$custom_page = apply_filters( 'fw_ext_breadcrumbs_current_page', [] );
 
 		if ( is_array( $custom_page ) && ! empty( $custom_page ) ) {
 			$return[] = $custom_page;
+			/** Filters the final breadcrumb items array built for a custom current page. */
 			$return   = apply_filters( 'fw_ext_breadcrumbs_build', $return );
 
 			return $return;
@@ -326,6 +329,7 @@ class Breadcrumbs_Builder {
 
 			$search['type'] = 'search';
 			$search['name'] = __( 'Searching for:', 'fw' ) . ' ' . get_search_query();
+			/** Filters the search query string appended to the search results breadcrumb URL. */
 			$s              = '?s=' . apply_filters( 'fw_ext_breadcrumbs_search_query', get_search_query() );
 			$search['url']  = home_url( '/' ) . $s;
 
@@ -446,6 +450,7 @@ class Breadcrumbs_Builder {
 			}
 
 			if ( is_day() ) {
+				/** Filters the PHP date format used for a daily archive breadcrumb label (default 'd F Y'). */
 				$date['name']      = mysql2date( apply_filters( 'fw_ext_breadcrumbs_date_day_format', 'd F Y' ),
 					$day . '-' . $month . '-' . $year );
 				$date['url']       = get_day_link( $year, $month, $day );
@@ -454,6 +459,7 @@ class Breadcrumbs_Builder {
 				$date['month']     = $month;
 				$date['year']      = $year;
 			} elseif ( is_month() ) {
+				/** Filters the PHP date format used for a monthly archive breadcrumb label (default 'F Y'). */
 				$date['name']      = mysql2date( apply_filters( 'fw_ext_breadcrumbs_date_month_format', 'F Y' ),
 					'01.' . $month . '.' . $year );
 				$date['url']       = get_month_link( $year, $month );
@@ -461,6 +467,7 @@ class Breadcrumbs_Builder {
 				$date['month']     = $month;
 				$date['year']      = $year;
 			} else {
+				/** Filters the PHP date format used for a yearly archive breadcrumb label (default 'Y'). */
 				$date['name']      = mysql2date( apply_filters( 'fw_ext_breadcrumbs_date_year_format', 'Y' ),
 					'01.01.' . $year );
 				$date['url']       = get_year_link( $year );
