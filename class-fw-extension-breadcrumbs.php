@@ -123,8 +123,12 @@ class FW_Extension_Breadcrumbs extends FW_Extension {
 		}
 
 		return $this->render_view( 'breadcrumbs', [
-			'items' => $items,
-			'args'  => $args,
+			'items'     => $items,
+			'args'      => $args,
+			// The variables the original Unyson passed, for themes that override this view
+			// (framework-customizations/extensions/breadcrumbs/views/breadcrumbs.php).
+			'separator' => (string) $args['separator'],
+			'labels'    => [],
 		] );
 	}
 
